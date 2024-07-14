@@ -9,7 +9,7 @@ from bitfusion.src.simulator.simulator import Simulator
 from bitfusion.src.sweep.sweep import SimulatorSweep, check_pandas_or_run
 from bitfusion.src.utils.utils import *
 from bitfusion.src.optimizer.optimizer import optimize_for_order, get_stats_fast
-
+#统计性能
 def df_to_stats(df):
     stats = Stats()
     stats.total_cycles = float(df['Cycles'].iloc[0])
@@ -23,7 +23,7 @@ def df_to_stats(df):
     stats.writes['wgt'] = float(df['WBUF Write'].iloc[0])
     stats.writes['dram'] = float(df['DRAM Write'].iloc[0])
     return stats
-
+#定义仿真结果和排名
 sim_sweep_columns = ['N', 'M',
         'Max Precision (bits)', 'Min Precision (bits)',
         'Network', 'Layer',
