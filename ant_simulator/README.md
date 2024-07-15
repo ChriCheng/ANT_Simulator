@@ -1,3 +1,23 @@
+# Simulator Read
+目前阅读下来，（已阅读的）文件的目录功能大致如下：
+## bitfusion
+里面大概都是性能计算的模块
+### sram
++ 里面包含了用于模拟和分析缓存和存储器的性能特性的cacti工具
+### src
++ 里面包括了有关simulator实例的基本组件
+
+## dnnweaver
+这个里面的话就是包括硬件模拟的一些代码
+### compiler
++ 里面定义了一些处理单元的运算（那个figure 2中的compute模块我认为就在这）
+
+### fpga
++ 里面用于管理fpga的资源
+### tf_utils
++ 这个里面就是我说的，包括一些他自己量化的内容，不同于论文。可以按quant为前缀检索
+
+
 # ANT Simulator
 
 This repository contains the code for the ANT simulator based on DNNWeaver and BitFusion.
