@@ -15,6 +15,10 @@ import numpy as np
 logger = logging.getLogger('{}.{}'.format(__name__, 'Optimizer'))
 logger.setLevel(logging.DEBUG)
 
+"""
+tile_deps 它定义了每个循环变量与激活、权重和输出的依赖关系。
+这些依赖关系决定了在不同循环层次上需要访问哪些内存区域，从而帮助优化内存访问和数据传输。
+"""
 tile_deps = {}
 tile_deps['B/b']   = {'act': True, 'wgt': False, 'out': True}
 tile_deps['OW/ow'] = {'act': True, 'wgt': False, 'out': True}
@@ -31,6 +35,10 @@ tile_deps['OC/oc'] = {'act': False, 'wgt': True, 'out': True}
 # inner_loop['kh'] = {'act': True, 'wgt': True, 'out': False}
 # inner_loop['kw'] = {'act': True, 'wgt': True, 'out': False}
 
+"""
+计算卷积操作的统计信息，包括内存访问、写入和计算周期。
+它根据传入的卷积参数和划分策略，估算不同循环顺序下的性能。
+"""
 def get_stats_fast(conv_params, tiling, order_type, verbose=False):
     """
     Returns cycles and memory accesses to DRAM, IBUF, OBUF, and WBUF
@@ -205,6 +213,10 @@ def get_stats_fast(conv_params, tiling, order_type, verbose=False):
 
     return stats
 
+"""
+生成所有可能的循环顺序排列，并调用 _optimize_for_order 函数，寻找最优的划分策略和循环顺序。
+使用多进程池来并行处理不同的排列组合，加快优化速度。
+"""
 def optimize_for_order(conv_params):
     # Generate permutations for the order
     loops = ['B/b', 'OW/ow', 'OH/oh', 'IC/ic', 'OC/oc']
@@ -252,7 +264,7 @@ def optimize_for_order(conv_params):
         pool.join()
         return
 
-
+"""根据优化得到的最优循环顺序和划分策略，生成相应的内存读写和计算指令。"""
 def get_loop_instructions(conv_params, tiling, order_type):
     acc_obj, K, O, S, IC, OC, B, iprec, wprec, im2col, weight_stationary, energy_cost = conv_params
     I = (O - 1) * S + K
@@ -371,7 +383,10 @@ def get_loop_instructions(conv_params, tiling, order_type):
 
     return instruction_ordered
 
-
+"""
+针对特定的循环顺序，进行详细的划分优化，计算各个参数下的执行周期和能量消耗。
+返回最优的划分策略和循环顺序。
+"""
 def _optimize_for_order(conv_params, order_type, verbose=False):
     """
     For a given ordering, optimizes tiling

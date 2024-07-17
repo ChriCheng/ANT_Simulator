@@ -1,21 +1,38 @@
 # Simulator Read
 目前阅读下来，（已阅读的）文件的目录功能大致如下：
+
+1. [bitfusion](#bitfusion)
+    * [sram](#sram)
+    * [src](#src)
+        + [optimizer](#optimizer)
+2. [dnnweaver2](#dnnweaver2)
+    * [compiler](#compiler)
+    * [fpga](#fpga)
+    * [tf_utils](#tf_utils)
+
 ## bitfusion
 里面大概都是性能计算的模块
-### sram
-+ 里面包含了用于模拟和分析缓存和存储器的性能特性的cacti工具
-### src
-+ 里面包括了有关simulator实例的基本组件
 
-## dnnweaver
-这个里面的话就是包括硬件模拟的一些代码
+### sram
++ 包含了用于模拟和分析缓存和存储器性能特性的 cacti 工具。
+
+### src
+包括了有关模拟器实例的基本组件。
+
+#### optimizer
++ 模块的主要功能是优化卷积神经网络在硬件加速器上的执行性能。通过调整数据分块和循环顺序，最小化计算周期和能量消耗，提升整体计算效率。
+
+## dnnweaver2
+这个目录包括了硬件模拟的一些代码。
+
 ### compiler
-+ 里面定义了一些处理单元的运算（那个figure 2中的compute模块我认为就在这）
++ 定义了一些处理单元的运算（figure 2 中的 compute 模块可能就在这）。
 
 ### fpga
-+ 里面用于管理fpga的资源
++ 用于管理 FPGA 的资源。
+
 ### tf_utils
-+ 这个里面就是我说的，包括一些他自己量化的内容，不同于论文。可以按quant为前缀检索
++ 包括一些自定义的量化内容，不同于论文中的实现。可以按 quant 为前缀检索相关内容。
 
 
 # ANT Simulator
