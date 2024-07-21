@@ -1055,58 +1055,172 @@ class BatchNorm(NodeOp):
         self.scale.data = params["scale"]
 
 def typecast(i, dtype, name=None):
+    """
+    功能：将输入张量 i 转换为指定的数据类型 dtype。
+    参数：
+        i：输入张量。
+        dtype：目标数据类型。
+        name：节点名称（可选）。
+    返回：转换后的张量。如果目标数据类型与输入张量的数据类型相同，则返回输入张量；否则，返回转换后的张量。
+    """
     if dtype is None or i.dtype == dtype:
         return i
     else:
         return TypeCastOp(i, dtype).output_tensors
 
 def addBias(i, b, dim, name=None, dtype=None):
+    """
+    功能：在指定维度 dim 上为输入张量 i 添加偏置 b。
+    参数：
+        i：输入张量。
+        b：偏置张量。
+        dim：添加偏置的维度。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：添加偏置后的张量，类型转换为指定的数据类型（如果有）。
+    """
     g = get_default_graph()
     op = AddBias(i, b, dim, name, dtype=dtype)
     return typecast(op.output_tensors, dtype)
 
 def conv2D(i, w, b, name=None, stride=None, pad='SAME', group=1, dtype=None):
+    """
+    功能：执行二维卷积操作。
+    参数：
+        i：输入张量。
+        w：卷积核张量。
+        b：偏置张量。
+        name：节点名称（可选）。
+        stride：卷积步幅（可选）。
+        pad：填充方式（默认为 'SAME'）。
+        group：组卷积数量（默认为 1）。
+        dtype：输出数据类型（可选）。
+    返回：卷积操作后的张量，类型转换为指定的数据类型（如果有）。
+    """
     g = get_default_graph()
     op = Convolution(i, w, b, name, stride=stride, pad=pad, group=group, dtype=dtype)
     return typecast(op.output_tensors, dtype)
 
 def maxPool(i, pooling_kernel, stride=(1,2,2,1), pad='VALID', name=None, dtype=None):
+    """
+    功能：执行最大池化操作。
+    参数：
+        i：输入张量。
+        pooling_kernel：池化核大小。
+        stride：池化步幅（默认为 (1, 2, 2, 1)）。
+        pad：填充方式（默认为 'VALID'）。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：最大池化操作后的张量，类型转换为指定的数据类型（如果有）。
+    """
     g = get_default_graph()
     op = MaxPooling(i, pooling_kernel, name, stride=stride, pad=pad, dtype=dtype)
     return typecast(op.output_tensors, dtype)
 
 def flatten(i, name=None, dtype=None):
+    """
+    功能：将输入张量展平为一维张量。
+    参数：
+        i：输入张量。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：展平后的张量，类型转换为指定的数据类型（如果有）。
+    """
     g = get_default_graph()
     op = Flatten(i, name)
     return typecast(op.output_tensors, dtype)
 
 def matmul(i, w, b, name=None, dtype=None):
+    """
+    功能：执行矩阵乘法操作。
+    参数：
+        i：输入张量。
+        w：权重张量。
+        b：偏置张量。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：矩阵乘法操作后的张量，类型转换为指定的数据类型（如果有）。
+    """
     g = get_default_graph()
     op = MatMul(i, w, b, name=name, dtype=dtype)
     return typecast(op.output_tensors, dtype)
 
 def concat(data, concat_dim, name=None, dtype=None):
+    """
+    功能：在指定维度上拼接多个张量。
+    参数：
+        data：输入张量列表。
+        concat_dim：拼接维度。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：拼接后的张量，类型转换为指定的数据类型（如果有）。
+    """
     op = Concat(data, concat_dim, name, dtype=dtype)
     return typecast(op.output_tensors, dtype)
 
 def add(data, name=None, dtype=None):
+    """
+    功能：对输入张量列表执行逐元素相加操作。
+    参数：
+        data：输入张量列表。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：相加后的张量，类型转换为指定的数据类型（如果有）。
+    """
     op = Add(data, name, dtype=dtype)
     return typecast(op.output_tensors, dtype)
 
 def globalAvgPool(data, name=None, dtype=None):
+    """
+    功能：执行全局平均池化操作。
+    参数：
+        data：输入张量。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：全局平均池化操作后的张量，类型转换为指定的数据类型（如果有）。
+    """
     op = GlobalAvgPooling(data, name, dtype=dtype)
     return typecast(op.output_tensors, dtype)
 
 def batch_norm(data, mean, scale, eps=0.000001, name=None, dtype=None):
+    """
+    功能：执行批归一化操作。
+    参数：
+        data：输入张量。
+        mean：均值张量。
+        scale：缩放张量。
+        eps：小常数，防止除零（默认为 0.000001）。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：批归一化操作后的张量，类型转换为指定的数据类型（如果有）。
+    """
     op = BatchNorm(data, mean, scale, eps=eps, node_name=name, dtype=dtype)
     return typecast(op.output_tensors, dtype)
 
 def leakyReLU(data, name=None, alpha=0.1, dtype=None):
+    """
+    功能：执行 Leaky ReLU 激活函数。
+    参数：
+        data：输入张量。
+        name：节点名称（可选）。
+        alpha：负斜率（默认为 0.1）。
+        dtype：输出数据类型（可选）。
+    返回：激活操作后的张量，类型转换为指定的数据类型（如果有）。
+    """
     if not isinstance(alpha, Tensor):
         alpha = get_tensor(shape=(1), name='alpha', data=alpha)
     op = LeakyReLU(data, alpha, node_name=None)
     return typecast(op.output_tensors, dtype)
 
 def reorg(data, reorg_kernel, name=None, dtype=None):
+    """
+    功能：执行重组操作，通常用于空间到深度转换。
+    参数：
+        data：输入张量。
+        reorg_kernel：重组核大小。
+        name：节点名称（可选）。
+        dtype：输出数据类型（可选）。
+    返回：重组操作后的张量，类型转换为指定的数据类型（如果有）。
+    """
     op = Reorg(data, reorg_kernel, name, dtype=dtype)
     return typecast(op.output_tensors, dtype)

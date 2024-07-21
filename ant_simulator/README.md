@@ -5,6 +5,7 @@
     * [sram](#sram)
     * [src](#src)
         + [optimizer](#optimizer)
+        + [benchmark](#benchmark)
 2. [dnnweaver2](#dnnweaver2)
     * [compiler](#compiler)
     * [fpga](#fpga)
@@ -21,6 +22,9 @@
 
 #### optimizer
 + 模块的主要功能是优化卷积神经网络在硬件加速器上的执行性能。通过调整数据分块和循环顺序，最小化计算周期和能量消耗，提升整体计算效率。
+
+#### benchmark
+benchmark中保存各种网络的配置，可按需生产各种网络
 
 ## dnnweaver2
 这个目录包括了硬件模拟的一些代码。

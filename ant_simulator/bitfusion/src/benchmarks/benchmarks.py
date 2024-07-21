@@ -19,6 +19,7 @@ import os
 def fc(tensor_in, output_channels=1024,
         f_dtype=None, w_dtype=None,
         act='linear'):
+    """该函数创建一个全连接层，并根据 act 参数应用激活函数"""
     input_channels = tensor_in.shape[-1]
     weights = get_tensor(shape=(output_channels, input_channels),
             name='weights',
@@ -42,7 +43,7 @@ def fc(tensor_in, output_channels=1024,
 def conv(tensor_in, filters=32, stride=None, kernel_size=3, pad='SAME',
         c_dtype=None, w_dtype=None,
         act='linear'):
-
+    """该函数创建一个卷积层，并根据 act 参数应用激活函数。"""
     if stride is None:
         stride = (1,1,1,1)
 
@@ -69,6 +70,7 @@ def conv(tensor_in, filters=32, stride=None, kernel_size=3, pad='SAME',
 
 
 def get_precision(precision):
+    """获取精度函数"""
     if precision == 16:
         return FQDtype.FXP16
     if precision == 8:
@@ -79,10 +81,18 @@ def get_precision(precision):
         return FQDtype.FXP6
 
 def create_net(net_name, net_list, batch_size):
+    """创建网络"""
     g = Graph(net_name, dataset='imagenet', log_level=logging.INFO)
     with g.as_default():
         for idx, op in enumerate(net_list):
             input_size, kernel_size, output_size, kernel_stride, padding, precision, op_type =  op
+            # input_size: 输入张量的尺寸
+            # kernel_size: 卷积核或权重的尺寸
+            # output_size: 输出张量的尺寸
+            # kernel_stride: 卷积核的步长
+            # padding: 填充信息
+            # precision: 精度 
+            # op_type: 操作类型
             input_size[0] = input_size[0] * batch_size
             output_size[0] = output_size[0] * batch_size
             precision = get_precision(precision)
@@ -143,7 +153,7 @@ benchlist = [\
              'sst_2',
             ]
 
-
+"""创造不同的网络结构"""
 def get_bench_nn_ant(bench_name, batch_size):
     if bench_name == 'vgg16':
         return create_net(bench_name, ant.vgg16, batch_size)
@@ -325,9 +335,9 @@ def write_to_csv(csv_name, fields, stats, graph, csv_path='./'):
     bench_csv_name = os.path.join(csv_path, csv_name)
     with open(bench_csv_name, 'w') as f:
         f.write(', '.join(fields+['\n']))
-        for l in network:
-            if isinstance(network[l], ConvLayer):
-                f.write('{}, {}\n'.format(l, ', '.join(str(x) for x in stats[l]['total'])))
+        # for l in network:
+        #     if isinstance(network[l], ConvLayer):
+        #         f.write('{}, {}\n'.format(l, ', '.join(str(x) for x in stats[l]['total'])))
 
 def get_bench_numbers(graph, sim_obj, batch_size=1, weight_stationary = False):
     stats = {}
