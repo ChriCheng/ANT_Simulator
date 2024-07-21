@@ -117,7 +117,7 @@ class SimulatorSweep(object):
                                                     nn = benchmarks.get_bench_nn_ola(b, batch_size)
                                                 elif bench_type == 'bis':
                                                     nn = benchmarks.get_bench_nn_bis(b, batch_size)
-                                                #开始仿真存储结果
+                                                
                                                 if len(results) == 0:
                                                     self.logger.info('Simulating Benchmark: {}'.format(b))
                                                     self.logger.info('N x M = {} x {}'.format(n, m))
@@ -126,6 +126,7 @@ class SimulatorSweep(object):
                                                     self.logger.info('Batch size: {}'.format(batch_size))
                                                     self.logger.info('Bandwidth (bits/cycle): {}'.format(bw))
                                                     stats = benchmarks.get_bench_numbers(nn, sim_obj, batch_size, weight_stationary = weight_stationary)
+                                                    #收集给定nn,sim,batch_size的执行数据加入到df中
                                                     for layer in stats:
                                                         cycles = stats[layer].total_cycles
                                                         reads = stats[layer].reads
