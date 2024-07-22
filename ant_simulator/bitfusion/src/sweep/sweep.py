@@ -149,7 +149,7 @@ class SimulatorSweep(object):
                                                 # self.sweep_df.to_csv(self.csv_filename, index=False)
                                                 data_line = []
         return self.sweep_df
-
+#df中已经有特定参数仿真结果
 def check_pandas_or_run(sim, dataframe, sim_sweep_csv, batch_size=1, config_file='./conf.ini', list_bench=None, bench_type='ant', weight_stationary = False):
     ld = {}
     ld['N'] = sim.accelerator.N
