@@ -97,7 +97,12 @@ class Simulator(object):
                 csv_file=os.path.join(dir_path, 'cacti_sweep.csv'),
                 default_json=os.path.join(dir_path, 'default.json'),
                 default_dict=sram_opt_dict)
-
+        """
+        bin_file: Cacti 模拟器的二进制文件路径。
+        csv_file: 存储SRAM模拟结果的CSV文件路径。
+        default_json: 默认配置的JSON文件路径。
+        default_dict: 包含默认配置参数的字典。
+        """
     def get_area(self):
         frequency = self.accelerator.frequency
         ##################################################
