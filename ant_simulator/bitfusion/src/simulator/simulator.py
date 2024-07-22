@@ -86,7 +86,7 @@ class Simulator(object):
 
         ##################################################
         # Get stats for SRAM
-        #28nm工艺
+        #通过cacti获得不同硬件配置下的 SRAM 性能和能耗
         frequency = self.accelerator.frequency
         tech_node = 28
         sram_csv = 'hardware_sweep/sram_results.csv'
