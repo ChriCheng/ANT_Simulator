@@ -32,7 +32,7 @@ class SimulatorSweep(object):
         # else:
         self.sweep_df = pandas.DataFrame(columns=self.columns)
         #初始df
-
+        #仿真和性能评估
     def sweep(self, sim_obj, list_n=None, list_m=None, list_pmax=None, list_pmin=None, list_bw=None, list_bench=None, list_wbuf=None, list_ibuf=None, list_obuf=None, list_batch=None, bench_type = None, weight_stationary = True):
         """
         Sweep the parameters of the accelerator
