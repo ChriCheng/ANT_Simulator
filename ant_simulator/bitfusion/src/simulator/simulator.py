@@ -22,7 +22,6 @@ class Simulator(object):
     """
 
     def __init__(self, config_file='conf.ini', verbose=False, energy_costs=None):
-
         # custom energy cost
         self.energy_costs = energy_costs
 
@@ -34,7 +33,7 @@ class Simulator(object):
         systolic_dim = [self.config.getint('accelerator', 'a'),
                              1,
                              self.config.getint('accelerator', 'c')]
-
+        #根据conf.ini配置systolic维度、if_width带宽、pmax、pmin最大最小精度、三个SRAM大小等
         if verbose:
             log_level = logging.DEBUG
         else:
@@ -68,7 +67,7 @@ class Simulator(object):
 
         frequency = self.config.getint('accelerator', 'frequency')
         self.logger.debug('Frequency: {:,} Hz'.format(frequency))
-
+        #计算最高精度下的峰值吞吐量和最低精度下的峰值吞吐量
         hp_peak_throughput = systolic_dim[0] * \
                              systolic_dim[1] * \
                              systolic_dim[2]
@@ -82,11 +81,12 @@ class Simulator(object):
         M = systolic_dim[2]
 
         assert beta == 1
-
+        #创建加速器
         self.accelerator = Accelerator(N, M, pmax, pmin, sram, mem_if_width, frequency)
 
         ##################################################
         # Get stats for SRAM
+        #28nm工艺
         frequency = self.accelerator.frequency
         tech_node = 28
         sram_csv = 'hardware_sweep/sram_results.csv'
