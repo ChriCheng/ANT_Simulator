@@ -253,7 +253,7 @@ class Simulator(object):
         assert ibuf_bank_size * ibuf_bank == ibuf_size
         assert obuf_bank_size * obuf_bank == obuf_size
 
-
+        #wub性能
         ##################################################
         cfg_dict = {'size (bytes)': wbuf_bank_size /8., 'block size (bytes)': wbuf_bits/8., 'read-write port': 0}
         
@@ -273,6 +273,7 @@ class Simulator(object):
         self.logger.debug('\tRead Energy                 : {0:>8.4f} pJ/bit'.format(wbuf_read_energy * 1.e3))
         self.logger.debug('\tWrite Energy                : {0:>8.4f} pJ/bit'.format(wbuf_write_energy * 1.e3))
         ##################################################
+        #ibuf性能
         cfg_dict = {'size (bytes)': ibuf_bank_size /8., 'block size (bytes)': ibuf_bits/8., 'read-write port': 0}
         ibuf_data = self.sram_obj.get_data_clean(cfg_dict)
         ibuf_read_energy = float(ibuf_data['read_energy_nJ'].iloc[0]) / ibuf_bits
@@ -290,6 +291,7 @@ class Simulator(object):
         self.logger.debug('\tRead Energy                 : {0:>8.4f} pJ/bit'.format(ibuf_read_energy * 1.e3))
         self.logger.debug('\tWrite Energy                : {0:>8.4f} pJ/bit'.format(ibuf_write_energy * 1.e3))
         ##################################################
+        #obuf性能
         cfg_dict = {'size (bytes)': obuf_bank_size /8., 'block size (bytes)': obuf_bits/8., 'read-write port': 1}
         obuf_data = self.sram_obj.get_data_clean(cfg_dict)
         obuf_read_energy = float(obuf_data['read_energy_nJ'].iloc[0]) / obuf_bits
