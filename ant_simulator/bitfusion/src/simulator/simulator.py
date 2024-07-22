@@ -140,8 +140,8 @@ class Simulator(object):
         wbuf_area = float(wbuf_data['area_mm^2'].iloc[0]) * wbuf_bank
 
         self.logger.debug('WBUF :')
-        self.logger.debug('\tBanks                       : {0:>8}'.format(wbuf_bank))
-        self.logger.debug('\tBitWidth                    : {0:>8} bits'.format(wbuf_bits))
+        self.logger.debug('\tBanks                       : {0:>8}'.format(wbuf_bank))              
+        self.logger.debug('\tBitWidth                    : {0:>8} bits'.format(wbuf_bits))         
         self.logger.debug('\tWords                       : {0:>8}'.format(wbuf_word))
         self.logger.debug('\tTotal Size                  : {0:>8} kBytes'.format(wbuf_size/8./1024.))
         self.logger.debug('\tTotal Area                  : {0:>8.2f} mm^2'.format(wbuf_area))
@@ -219,7 +219,7 @@ class Simulator(object):
         ##################################################
 
         return core_area, wbuf_area, ibuf_area, obuf_area
-
+#get_energy_cost与get_area函数一样，只是一个返回的是area，一个返回energy
     def get_energy_cost(self):
 
         if self.energy_costs is not None:
@@ -253,7 +253,7 @@ class Simulator(object):
         assert ibuf_bank_size * ibuf_bank == ibuf_size
         assert obuf_bank_size * obuf_bank == obuf_size
 
-        #wub性能
+        #wbuf性能
         ##################################################
         cfg_dict = {'size (bytes)': wbuf_bank_size /8., 'block size (bytes)': wbuf_bits/8., 'read-write port': 0}
         
