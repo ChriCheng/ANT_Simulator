@@ -165,7 +165,7 @@ wr_bench_name = ", "
 wr_model_name = ", "
 for i in range(len(bf_e_cycles_ant)):
     model_name = benchmarks.benchlist[i]
-
+    #以adaFloat性能为基准，对其他量化方法性能进行相对评估
     cyc_4 = bf_e_cycles_ada[i]
     cyc_1 = bf_e_cycles_ant[i] / cyc_4
     cyc_1_mean += cyc_1
@@ -204,7 +204,7 @@ cyc_2_mean /= len(bf_e_cycles_ant)
 cyc_3_mean /= len(bf_e_cycles_ant)
 cyc_4_mean /= len(bf_e_cycles_ant)
 cyc_6_mean /= len(bf_e_cycles_ant)
-
+#这些量化方法在这些模型的平均性能
 wr_model_name += "Geomean, , , , , \n"
 wr_bench_name += "ANT-OS, ANT-WS, BitFusion, OLAccel, BiScaled, AdaFloat\n"
 wr_line += ("%0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, " %(cyc_1_mean, cyc_5_mean, cyc_2_mean, cyc_3_mean, cyc_6_mean, cyc_4_mean)) + "\n"
