@@ -31,43 +31,46 @@ class SimulatorSweep(object):
         #     self.sweep_df = pandas.read_csv(csv_filename)
         # else:
         self.sweep_df = pandas.DataFrame(columns=self.columns)
-
+        #初始df
+        #仿真和性能评估
     def sweep(self, sim_obj, list_n=None, list_m=None, list_pmax=None, list_pmin=None, list_bw=None, list_bench=None, list_wbuf=None, list_ibuf=None, list_obuf=None, list_batch=None, bench_type = None, weight_stationary = True):
         """
         Sweep the parameters of the accelerator
         """
-
+        # 扫描加速器参数
         if list_n is None:
             list_n = [sim_obj.accelerator.N]
         if list_m is None:
             list_m = [sim_obj.accelerator.M]
-
+        #维度N*M
         if list_pmax is None:
             list_pmax = [sim_obj.accelerator.pmax]
         if list_pmin is None:
             list_pmin = [sim_obj.accelerator.pmin]
-
+        #最大最小精度
         if list_bw is None:
             list_bw = [sim_obj.accelerator.mem_if_width]
-
+        #带宽
         if list_bench is None:
             list_bench = benchmarks.benchlist
-
+        #测试列表
         if list_wbuf is None:
             list_wbuf = [sim_obj.accelerator.sram['wgt']]
         if list_ibuf is None:
             list_ibuf = [sim_obj.accelerator.sram['act']]
         if list_obuf is None:
             list_obuf = [sim_obj.accelerator.sram['out']]
-
+        #权重、输入、输出sram
         if list_batch is None:
             list_batch = [1]
-
+        
         data_line = []
         for batch_size in list_batch:
             for n in list_n:
                 for m in list_m:
+                    #遍历批量大小、N*M维度的所有组合
                     # self.logger.info('N x M = {} x {}'.format(n, m))
+                    # 遍历最大精度和最小精度的所有组合
                     for pmax in list_pmax:
                         for pmin in list_pmin:
                             if pmin > pmax:
@@ -75,7 +78,9 @@ class SimulatorSweep(object):
                             for wbuf in list_wbuf:
                                 for ibuf in list_ibuf:
                                     for obuf in list_obuf:
+                                        # 遍历权重、激活值和输出缓冲区大小的所有组合
                                         for bw in list_bw:
+                                            #遍历内存接口宽度的所有组合
                                             sim_obj.accelerator.N = n
                                             sim_obj.accelerator.M = m
                                             sim_obj.accelerator.pmax = pmax
@@ -84,6 +89,8 @@ class SimulatorSweep(object):
                                             sim_obj.accelerator.sram['wgt'] = wbuf
                                             sim_obj.accelerator.sram['out'] = obuf
                                             sim_obj.accelerator.sram['act'] = ibuf
+                                            #设置加速器的参数为当前循环的参数值
+                                            #用设置好的加速器遍历基准测试的所有组合
                                             for b in list_bench:
                                                 lookup_dict = {}
                                                 lookup_dict['N'] = n
@@ -97,6 +104,7 @@ class SimulatorSweep(object):
                                                 lookup_dict['IBUF Size (bits)'] = ibuf
                                                 lookup_dict['Batch size'] = batch_size
                                                 results = lookup_pandas_dataframe(self.sweep_df, lookup_dict)
+                                                #根据传来的bench_type获取相应nn网络结构
                                                 if bench_type == 'ant':
                                                     nn = benchmarks.get_bench_nn_ant(b, batch_size)
                                                 if bench_type == 'ant_weight':
@@ -109,7 +117,7 @@ class SimulatorSweep(object):
                                                     nn = benchmarks.get_bench_nn_ola(b, batch_size)
                                                 elif bench_type == 'bis':
                                                     nn = benchmarks.get_bench_nn_bis(b, batch_size)
-
+                                                
                                                 if len(results) == 0:
                                                     self.logger.info('Simulating Benchmark: {}'.format(b))
                                                     self.logger.info('N x M = {} x {}'.format(n, m))
@@ -118,6 +126,7 @@ class SimulatorSweep(object):
                                                     self.logger.info('Batch size: {}'.format(batch_size))
                                                     self.logger.info('Bandwidth (bits/cycle): {}'.format(bw))
                                                     stats = benchmarks.get_bench_numbers(nn, sim_obj, batch_size, weight_stationary = weight_stationary)
+                                                    #收集给定nn,sim,batch_size的执行数据加入到df中
                                                     for layer in stats:
                                                         cycles = stats[layer].total_cycles
                                                         reads = stats[layer].reads
@@ -140,7 +149,7 @@ class SimulatorSweep(object):
                                                 # self.sweep_df.to_csv(self.csv_filename, index=False)
                                                 data_line = []
         return self.sweep_df
-
+#df中已经有特定参数仿真结果
 def check_pandas_or_run(sim, dataframe, sim_sweep_csv, batch_size=1, config_file='./conf.ini', list_bench=None, bench_type='ant', weight_stationary = False):
     ld = {}
     ld['N'] = sim.accelerator.N

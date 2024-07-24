@@ -22,7 +22,6 @@ class Simulator(object):
     """
 
     def __init__(self, config_file='conf.ini', verbose=False, energy_costs=None):
-
         # custom energy cost
         self.energy_costs = energy_costs
 
@@ -34,7 +33,7 @@ class Simulator(object):
         systolic_dim = [self.config.getint('accelerator', 'a'),
                              1,
                              self.config.getint('accelerator', 'c')]
-
+        #根据conf.ini配置systolic维度、if_width带宽、pmax、pmin最大最小精度、三个SRAM大小等
         if verbose:
             log_level = logging.DEBUG
         else:
@@ -68,7 +67,7 @@ class Simulator(object):
 
         frequency = self.config.getint('accelerator', 'frequency')
         self.logger.debug('Frequency: {:,} Hz'.format(frequency))
-
+        #计算最高精度下的峰值吞吐量和最低精度下的峰值吞吐量
         hp_peak_throughput = systolic_dim[0] * \
                              systolic_dim[1] * \
                              systolic_dim[2]
@@ -82,11 +81,12 @@ class Simulator(object):
         M = systolic_dim[2]
 
         assert beta == 1
-
+        #创建加速器
         self.accelerator = Accelerator(N, M, pmax, pmin, sram, mem_if_width, frequency)
 
         ##################################################
         # Get stats for SRAM
+        #通过cacti获得不同硬件配置下的 SRAM 性能和能耗
         frequency = self.accelerator.frequency
         tech_node = 28
         sram_csv = 'hardware_sweep/sram_results.csv'
@@ -97,7 +97,12 @@ class Simulator(object):
                 csv_file=os.path.join(dir_path, 'cacti_sweep.csv'),
                 default_json=os.path.join(dir_path, 'default.json'),
                 default_dict=sram_opt_dict)
-
+        """
+        bin_file: Cacti 模拟器的二进制文件路径。
+        csv_file: 存储SRAM模拟结果的CSV文件路径。
+        default_json: 默认配置的JSON文件路径。
+        default_dict: 包含默认配置参数的字典。
+        """
     def get_area(self):
         frequency = self.accelerator.frequency
         ##################################################
@@ -135,8 +140,8 @@ class Simulator(object):
         wbuf_area = float(wbuf_data['area_mm^2'].iloc[0]) * wbuf_bank
 
         self.logger.debug('WBUF :')
-        self.logger.debug('\tBanks                       : {0:>8}'.format(wbuf_bank))
-        self.logger.debug('\tBitWidth                    : {0:>8} bits'.format(wbuf_bits))
+        self.logger.debug('\tBanks                       : {0:>8}'.format(wbuf_bank))              
+        self.logger.debug('\tBitWidth                    : {0:>8} bits'.format(wbuf_bits))         
         self.logger.debug('\tWords                       : {0:>8}'.format(wbuf_word))
         self.logger.debug('\tTotal Size                  : {0:>8} kBytes'.format(wbuf_size/8./1024.))
         self.logger.debug('\tTotal Area                  : {0:>8.2f} mm^2'.format(wbuf_area))
@@ -214,7 +219,7 @@ class Simulator(object):
         ##################################################
 
         return core_area, wbuf_area, ibuf_area, obuf_area
-
+#get_energy_cost与get_area函数一样，只是一个返回的是area，一个返回energy
     def get_energy_cost(self):
 
         if self.energy_costs is not None:
@@ -248,7 +253,7 @@ class Simulator(object):
         assert ibuf_bank_size * ibuf_bank == ibuf_size
         assert obuf_bank_size * obuf_bank == obuf_size
 
-
+        #wbuf性能
         ##################################################
         cfg_dict = {'size (bytes)': wbuf_bank_size /8., 'block size (bytes)': wbuf_bits/8., 'read-write port': 0}
         
@@ -268,6 +273,7 @@ class Simulator(object):
         self.logger.debug('\tRead Energy                 : {0:>8.4f} pJ/bit'.format(wbuf_read_energy * 1.e3))
         self.logger.debug('\tWrite Energy                : {0:>8.4f} pJ/bit'.format(wbuf_write_energy * 1.e3))
         ##################################################
+        #ibuf性能
         cfg_dict = {'size (bytes)': ibuf_bank_size /8., 'block size (bytes)': ibuf_bits/8., 'read-write port': 0}
         ibuf_data = self.sram_obj.get_data_clean(cfg_dict)
         ibuf_read_energy = float(ibuf_data['read_energy_nJ'].iloc[0]) / ibuf_bits
@@ -285,6 +291,7 @@ class Simulator(object):
         self.logger.debug('\tRead Energy                 : {0:>8.4f} pJ/bit'.format(ibuf_read_energy * 1.e3))
         self.logger.debug('\tWrite Energy                : {0:>8.4f} pJ/bit'.format(ibuf_write_energy * 1.e3))
         ##################################################
+        #obuf性能
         cfg_dict = {'size (bytes)': obuf_bank_size /8., 'block size (bytes)': obuf_bits/8., 'read-write port': 1}
         obuf_data = self.sram_obj.get_data_clean(cfg_dict)
         obuf_read_energy = float(obuf_data['read_energy_nJ'].iloc[0]) / obuf_bits
