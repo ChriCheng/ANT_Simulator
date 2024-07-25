@@ -88,6 +88,7 @@ bf_e_results = bf_e_results.groupby('Network',as_index=False).agg(np.sum)
 bf_e_cycles_bit = []
 bf_e_energy_bit = []
 for name in benchmarks.benchlist:
+    #按照bechlist的顺序，把当前量化方法得到的cycles和energy添加
     bf_e_stats = df_to_stats(bf_e_results.loc[bf_e_results['Network'] == name])
     bf_e_cycles_bit.append(bf_e_stats.total_cycles)
     bf_e_energy_bit.append(bf_e_stats.get_energy_breakdown(bf_e_sim.get_energy_cost()))
