@@ -6,6 +6,7 @@
     * [src](#src)
         + [optimizer](#optimizer)
         + [benchmark](#benchmark)
+        + [simulator](#simulator)
 2. [dnnweaver2](#dnnweaver2)
     * [compiler](#compiler)
     * [fpga](#fpga)
@@ -15,7 +16,7 @@
 里面大概都是性能计算的模块
 
 ### sram
-+ 包含了用于模拟和分析缓存和存储器性能特性的 cacti 工具。
++ 包含了用于模拟和分析缓存和存储器性能特性的 cacti 工具，area和energy_cost通过cactic获得。
 
 ### src
 包括了有关模拟器实例的基本组件。
@@ -24,8 +25,12 @@
 + 模块的主要功能是优化卷积神经网络在硬件加速器上的执行性能。通过调整数据分块和循环顺序，最小化计算周期和能量消耗，提升整体计算效率。
 
 #### benchmark
-benchmark中保存各种网络的配置，可按需生产各种网络
+benchmark中保存各种网络的配置，可按需生产各种网络,借助dnnwearver的graph.py生成计算图。其中例如ant_bench.py为量化后的网络结构参数列表，各个量化后的网络不同之处在于prec精度不同
 
+#### simulator
++ 通过simulator类可以获取面积(get_area),能耗(energy_cost),周期数get_cycles 
++ accelerator类实现了具体计算cycles
++ stats类统计数据
 ## dnnweaver2
 这个目录包括了硬件模拟的一些代码。
 
