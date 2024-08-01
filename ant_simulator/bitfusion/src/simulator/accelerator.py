@@ -122,8 +122,10 @@ class Accelerator(object):
             ni = kw * kh * ic
             no = oc
             batch = b * oh * ow
-            compute_cycles = ceil_a_by_b(batch, self.N * self.get_perf_factor(iprec)) * ceil_a_by_b(no, self.M * self.get_perf_factor(wprec)) * \
-                    ni
+            #compute_cycles = ceil_a_by_b(batch, self.N * self.get_perf_factor(iprec)) * ceil_a_by_b(no, self.M * self.get_perf_factor(wprec)) * \
+            #         ni
+            compute_cycles = batch * ceil_a_by_b(no, self.M * self.get_perf_factor(wprec)) * \
+                    (ceil_a_by_b(ni, self.N * self.get_perf_factor(iprec)))
         else:
             raise (ValueError, 'Not supported!')
 
