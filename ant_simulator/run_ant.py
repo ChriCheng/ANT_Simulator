@@ -52,7 +52,7 @@ bf_e_sim_sweep_df = pandas.DataFrame(columns=sim_sweep_columns)
 bf_e_results = check_pandas_or_run(bf_e_sim, bf_e_sim_sweep_df, bf_e_sim_sweep_csv, batch_size=batch_size, bench_type='ant')
 bf_e_results = bf_e_results.groupby('Network',as_index=False).agg(np.sum)
 bf_e_cycles_ant = []
-bf_e_energy_ant = []
+bf_e_energy_ant = [] 
 for name in benchmarks.benchlist:
     bf_e_stats = df_to_stats(bf_e_results.loc[bf_e_results['Network'] == name])
     bf_e_cycles_ant.append(bf_e_stats.total_cycles)

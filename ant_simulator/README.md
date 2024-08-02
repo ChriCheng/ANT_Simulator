@@ -32,7 +32,7 @@ benchmark中保存各种网络的配置，可按需生产各种网络,借助dnnw
 + accelerator类实现了具体计算cycles
 + stats类统计数据
 ## dnnweaver2
-这个目录包括了硬件模拟的一些代码。
+DNNWeaver 是一个综合框架，旨在自动化从高层次规范生成用于深度神经网络 (DNN) 的 FPGA 加速器的过程。该框架解决了在 FPGA 上优化性能和能源效率的挑战，特别是针对 FPGA 有限的片上存储和带宽问题。
 
 ### compiler
 + 定义了一些处理单元的运算（figure 2 中的 compute 模块可能就在这）。

@@ -427,17 +427,31 @@ class Simulator(object):
         description:
             This functions does an exhaustive search for finding the optimal
             Tiling and Ordering parameters
+        
+        parameters:
+            K (int): 卷积核的尺寸，表示卷积核的高度和宽度。
+            O (int): 输出特征图的尺寸，表示输出特征图的高度和宽度（假设输出是正方形）。
+            S (int): 步幅，表示卷积核在输入特征图上滑动时每次移动的像素数。
+            IC (int): 输入通道数，表示输入特征图的通道数量。
+            OC (int): 输出通道数，表示卷积核的数量或输出特征图的通道数。
+            iprec (int): 输入数据的精度，表示输入数据的位宽（bit-width）。
+            wprec (int): 权重数据的精度，表示卷积核权重的位宽（bit-width）。
+            batch_size (int, optional): 批次大小，表示每次处理的输入样本数量。默认值为1。
+            im2col (bool, optional): 是否使用 im2col 操作，将输入数据转换为二维矩阵以便进行高效的矩阵乘法。默认值为True。
+            weight_stationary (bool, optional): 权重是否固定，表示卷积核权重在整个计算过程中是否保持不变。默认值为False。
+
+
         """
         B = batch_size
         I = (O - 1) * S + K
-
+        
         # We do not tile the "K" dimension and compute an entire 2-D conv at a
         # time
         num_O_tiles = int(math.ceil(log2(O))) + 1
         num_IC_tiles = int(math.ceil(log2(IC))) + 1
         num_OC_tiles = int(math.ceil(log2(math.ceil(float(OC)/self.accelerator.M)))) + 1
         num_B_tiles = int(math.ceil(log2(B))) + 1
-
+        """分别对输入/输出通道、分支和输出特征图划分"""
         # print("*"*30)
         # print(num_O_tiles)
         # print(num_IC_tiles)

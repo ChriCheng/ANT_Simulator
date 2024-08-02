@@ -35,14 +35,14 @@ tile_deps['OC/oc'] = {'act': False, 'wgt': True, 'out': True}
 # inner_loop['kh'] = {'act': True, 'wgt': True, 'out': False}
 # inner_loop['kw'] = {'act': True, 'wgt': True, 'out': False}
 
-"""
-计算卷积操作的统计信息，包括内存访问、写入和计算周期。
-它根据传入的卷积参数和划分策略，估算不同循环顺序下的性能。
-"""
+
 def get_stats_fast(conv_params, tiling, order_type, verbose=False):
     """
     Returns cycles and memory accesses to DRAM, IBUF, OBUF, and WBUF
         TODOs: Without im2col, the calculation of weight and act size is inexact
+
+    计算卷积操作的统计信息，包括内存访问、写入和计算周期。
+    它根据传入的卷积参数和划分策略，估算不同循环顺序下的性能。
     """
     acc_obj, K, O, S, IC, OC, B, iprec, wprec, im2col, weight_stationary, energy_cost = conv_params
 
@@ -213,11 +213,12 @@ def get_stats_fast(conv_params, tiling, order_type, verbose=False):
 
     return stats
 
-"""
-生成所有可能的循环顺序排列，并调用 _optimize_for_order 函数，寻找最优的划分策略和循环顺序。
-使用多进程池来并行处理不同的排列组合，加快优化速度。
-"""
+
 def optimize_for_order(conv_params):
+    """
+    生成所有可能的循环顺序排列，并调用 _optimize_for_order 函数，寻找最优的划分策略和循环顺序。
+    使用多进程池来并行处理不同的排列组合，加快优化速度。
+    """
     # Generate permutations for the order
     loops = ['B/b', 'OW/ow', 'OH/oh', 'IC/ic', 'OC/oc']
     order = set(permutations(loops))
@@ -251,6 +252,7 @@ def optimize_for_order(conv_params):
         # cycles_list = [x[-2] for x in results]
         # energy_list = [x[-1] for x in results]
         for r in results:
+            print(r)
             tiling, order_type, cycles, energy = r
             if best_cycles is None or best_cycles > cycles or (best_cycles == cycles and best_energy > energy):
                 best_cycles = cycles
@@ -383,11 +385,12 @@ def get_loop_instructions(conv_params, tiling, order_type):
 
     return instruction_ordered
 
-"""
-针对特定的循环顺序，进行详细的划分优化，计算各个参数下的执行周期和能量消耗。
-返回最优的划分策略和循环顺序。
-"""
+
 def _optimize_for_order(conv_params, order_type, verbose=False):
+    """
+    针对特定的循环顺序，进行详细的划分优化，计算各个参数下的执行周期和能量消耗。
+    返回最优的划分策略和循环顺序。
+    """
     """
     For a given ordering, optimizes tiling
     Args:
