@@ -63,17 +63,26 @@ def get_stats_fast(conv_params, tiling, order_type, verbose=False):
             ceil_a_by_b(K * K * ic, acc_obj.N * acc_obj.get_perf_factor(wprec)) * acc_obj.N * acc_obj.get_perf_factor(wprec) * \
             oc * \
             wprec
+    """
+    K * K * ic : 卷积核大小计算
+    acc_obj.N ： 脉动阵列的行数
+    get_perf_factor(wprec) :这个因子表示处理单元在处理该精度数据时的效率提升。例如较低精度数据处理可能更快，因此性能因子更高。
+    ceil_a_by_b 计算处理所有输入激活数据所需的周期数，向上取整
+    b : 是批次大小。
+    writes['wgt'] : 计算的是所有卷积操作中权重数据的总写入大, 单位Bytes
+    """
 
     writes['act'] = ow * oh * \
             ceil_a_by_b(K * K * ic, acc_obj.M * acc_obj.get_perf_factor(iprec)) * acc_obj.M * acc_obj.get_perf_factor(iprec) * \
             b * iprec
 
     oprec = 16
-    writes['out'] = 0# ow * oh * oc * b * oprec
+    writes['out'] = 0 # ow * oh * oc * b * oprec
     reads['out'] = ow * oh * oc * b * oprec
 
     # Skip if overutilizing resources
     # TODO check bytes/bits
+    # 检查是否资源过载：
     overflow = False
     if writes['wgt'] > acc_obj.sram['wgt']*8/2:
         if verbose:
@@ -96,7 +105,7 @@ def get_stats_fast(conv_params, tiling, order_type, verbose=False):
             print('Weights size: {} bytes'.format(writes['wgt']/8.))
             print('Output size: {} bytes'.format(writes['out']/8.))
         return
-
+    # 初始化最大写入和读取大小
     max_write_size = {}
     max_read_size = {}
     for namespace in writes:
@@ -156,7 +165,7 @@ def get_stats_fast(conv_params, tiling, order_type, verbose=False):
             logger.debug('\tReads : {}'.format(reads))
             logger.debug('\tWrites: {}'.format(writes))
 
-
+    # 记录最终的写入和读取大小
     for namespace in writes:
         stats.writes[namespace] = writes[namespace]
         stats.reads['dram'] += writes[namespace]
@@ -252,7 +261,7 @@ def optimize_for_order(conv_params):
         # cycles_list = [x[-2] for x in results]
         # energy_list = [x[-1] for x in results]
         for r in results:
-            print(r)
+            # print(r)
             tiling, order_type, cycles, energy = r
             if best_cycles is None or best_cycles > cycles or (best_cycles == cycles and best_energy > energy):
                 best_cycles = cycles
@@ -266,8 +275,9 @@ def optimize_for_order(conv_params):
         pool.join()
         return
 
-"""根据优化得到的最优循环顺序和划分策略，生成相应的内存读写和计算指令。"""
+
 def get_loop_instructions(conv_params, tiling, order_type):
+    """根据优化得到的最优循环顺序和划分策略，生成相应的内存读写和计算指令。"""
     acc_obj, K, O, S, IC, OC, B, iprec, wprec, im2col, weight_stationary, energy_cost = conv_params
     I = (O - 1) * S + K
 
