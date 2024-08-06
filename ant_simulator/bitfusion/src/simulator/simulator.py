@@ -439,8 +439,6 @@ class Simulator(object):
             batch_size (int, optional): 批次大小，表示每次处理的输入样本数量。默认值为1。
             im2col (bool, optional): 是否使用 im2col 操作，将输入数据转换为二维矩阵以便进行高效的矩阵乘法。默认值为True。
             weight_stationary (bool, optional): 权重是否固定，表示卷积核权重在整个计算过程中是否保持不变。默认值为False。
-
-
         """
         B = batch_size
         I = (O - 1) * S + K
@@ -519,6 +517,11 @@ class Simulator(object):
 
             iprec = op.data.dtype.bits
             wprec = op.weights.dtype.bits
+            # print(op)
+            # print(op.data)
+            # print(op.data.dtype)
+            # print(op.data.dtype.bits)
+            
             # if op.data.op is None:
             #     im2col = True # im2col for first layer
             # else:

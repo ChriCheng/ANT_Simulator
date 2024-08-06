@@ -67,11 +67,17 @@ class Accelerator(object):
 
 
     def get_perf_factor(self, iprec, wprec):
+        """
+        计算输入精度和权重精度的综合性能因子
+        """
         iprec = max(iprec, self.pmin)
         wprec = max(wprec, self.pmin)
         return int(self.pmax / iprec) * int(self.pmax / wprec)
 
     def get_perf_factor(self, prec):
+        """
+        计算单个精度的性能因子
+        """
         prec = max(prec, self.pmin)
         return int(self.pmax / prec)
 
