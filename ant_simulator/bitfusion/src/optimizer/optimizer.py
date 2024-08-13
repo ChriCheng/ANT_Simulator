@@ -69,9 +69,7 @@ def get_stats_fast(conv_params, tiling, order_type, verbose=False):
 
     # perf_factor = acc_obj.get_perf_factor(iprec, wprec)
     
-    #写入脉冲阵列的数据
     writes = {}
-    #读出脉冲阵列的数据
     reads = {}
     
     # print(f"acc_obj.get_perf_factor(wprec) is : {acc_obj.get_perf_factor(wprec)}")
@@ -88,9 +86,9 @@ def get_stats_fast(conv_params, tiling, order_type, verbose=False):
     acc_obj.N ： 脉动阵列的行数
     get_perf_factor(wprec) ：这个因子表示处理单元在处理该精度数据时的效率提升。例如较低精度数据处理可能更快，因此性能因子更高。
     acc_obj.N * get_perf_factor(wprec) 单次处理大小
-    ceil_a_by_b ：计算处理所需的次数，上去整 
+    ceil_a_by_b ：需要多少阵列 or 单一阵列处理多少次
     ceil_a_by_b * acc_obj.N* acc_obj.get_perf_factor(wprec) ：实际所需容纳卷积核的大小
-    oc : 输出通道数量
+    *oc : 卷积核维度
     wprec ： 权重精度
     writes['wgt'] : 每个tiles中卷积操作中权重数据的总写入大, 单位Bytes
     """
