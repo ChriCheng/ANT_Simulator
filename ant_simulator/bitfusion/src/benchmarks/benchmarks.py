@@ -344,9 +344,9 @@ def get_bench_numbers(graph, sim_obj, batch_size=1, weight_stationary = False):
     round_number = 1
 
     for opname, op in graph.op_registry.items():
-        print(f"Round {round_number}:")
-        print(f"Processing operation: {opname}")
-        print(f"Operation details: {op}")
+        # print(f"Round {round_number}:")
+        # print(f"Processing operation: {opname}")
+        # print(f"Operation details: {op}")
 
         out = sim_obj.get_cycles(op, batch_size, weight_stationary=weight_stationary)
         if out is not None:

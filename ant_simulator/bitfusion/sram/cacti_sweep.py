@@ -6,6 +6,12 @@ import json
 
 class CactiSweep(object):
     def __init__(self, bin_file='./cacti/cacti', csv_file='cacti_sweep.csv', default_json='./default.json', default_dict=None):
+        """
+           bin_file：CACTI 二进制文件的路径，默认为 './cacti/cacti'。
+           csv_file：保存结果的 CSV 文件路径，默认为 'cacti_sweep.csv'。
+           default_json：默认配置的 JSON 文件路径，默认为 './default.json'。
+           default_dict：一个可选的字典参数，用于更新默认配置。 此处用于把工艺由45nm更新为28nm
+        """
         if not os.path.isfile(bin_file):
             print("Can't find binary file {}. Please clone and compile cacti first".format(bin_file))
             self.bin_file = None
