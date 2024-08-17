@@ -7,7 +7,7 @@ import json
 class CactiSweep(object):
     def __init__(self, bin_file='./cacti/cacti', csv_file='cacti_sweep.csv', default_json='./default.json', default_dict=None):
         """
-           bin_file：CACTI 二进制文件的路径，默认为 './cacti/cacti'。
+           bin_file：CACTI的文件的路径，默认为 './cacti/cacti'。
            csv_file：保存结果的 CSV 文件路径，默认为 'cacti_sweep.csv'。
            default_json：默认配置的 JSON 文件路径，默认为 './default.json'。
            default_dict：一个可选的字典参数，用于更新默认配置。 此处用于把工艺由45nm更新为28nm
@@ -86,8 +86,8 @@ class CactiSweep(object):
         """
         Get data from cacti
         """
-        assert self.bin_file is not None, 'Can\'t run cacti, no binary found. Please clone and compile cacti first.'
         cfg_dict = self.default_dict.copy()
+        assert self.bin_file is not None, 'Can\'t run cacti, no binary found. Please clone and compile cacti first.'
         cfg_dict.update(index_dict)
         self._create_cfg(cfg_dict, self.cfg_file)
         args = (self.bin_file, "-infile", self.cfg_file)
@@ -113,6 +113,7 @@ class CactiSweep(object):
             row_dict = index_dict.copy()
             row_dict.update(self._run_cacti(index_dict))
             row_dict["area_mm^2"] = float(row_dict["height_mm"]) * float(row_dict["width_mm"])
+            #更新row_dict
             self._df = pandas.concat([self._df, pandas.DataFrame([row_dict])], ignore_index=True)
             self.update_csv()
             return self.locate(index_dict)

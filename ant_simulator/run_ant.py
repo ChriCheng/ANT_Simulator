@@ -144,6 +144,8 @@ for name in benchmarks.benchlist:
     bf_e_cycles_bis.append(bf_e_stats.total_cycles)
     bf_e_energy_bis.append(bf_e_stats.get_energy_breakdown(bf_e_sim.get_energy_cost()))
 
+#--------------------- 以上是各模型计算-------------------------/
+#--------------------- 以上是统计汇总-------------------------/
 
 all_cyc = []
 cyc_1_mean = 0
