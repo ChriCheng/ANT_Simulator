@@ -1,0 +1,3 @@
+# ninja log v5
+0	37922	1724157511366697908	/home/kuic/code/ANT-Quantization/olive_quantization/quant/build/temp.linux-x86_64-cpython-38/quant.o	bf0f545ebd4e36ac
+1	82961	1724157556401679298	/home/kuic/code/ANT-Quantization/olive_quantization/quant/build/temp.linux-x86_64-cpython-38/quant_kernel.o	2c30a6af0e7fd7ce

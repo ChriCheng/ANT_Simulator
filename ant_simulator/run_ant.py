@@ -57,7 +57,9 @@ for name in benchmarks.benchlist:
     bf_e_stats = df_to_stats(bf_e_results.loc[bf_e_results['Network'] == name])
     bf_e_cycles_ant.append(bf_e_stats.total_cycles)
     bf_e_energy_ant.append(bf_e_stats.get_energy_breakdown(bf_e_sim.get_energy_cost()))
-
+    #bf_e_sim.get_energy_cost()会配置缓冲区 根据accerlator更新stats
+    #get_energy_breakdown
+# print(f"length of len(bf_e_cycles_ant:{len(bf_e_cycles_ant)}")
 
 # ANT weight_stationary configuration file
 config_file = 'conf_ant.ini'
@@ -142,6 +144,8 @@ for name in benchmarks.benchlist:
     bf_e_cycles_bis.append(bf_e_stats.total_cycles)
     bf_e_energy_bis.append(bf_e_stats.get_energy_breakdown(bf_e_sim.get_energy_cost()))
 
+#--------------------- 以上是各模型计算-------------------------/
+#--------------------- 以上是统计汇总-------------------------/
 
 all_cyc = []
 cyc_1_mean = 0
@@ -164,6 +168,7 @@ ff = open(os.getcwd() + '/results/ant_res.csv', "a")
 wr_line = "Time, "
 wr_bench_name = ", "
 wr_model_name = ", "
+
 for i in range(len(bf_e_cycles_ant)):
     model_name = benchmarks.benchlist[i]
     #以adaFloat性能为基准，对其他量化方法性能进行相对评估

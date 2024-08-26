@@ -20,6 +20,7 @@ import math
 import os
 import random
 from pathlib import Path
+from datasets import load_from_disk #offline
 
 import datasets
 import torch
@@ -321,7 +322,8 @@ def main():
     # download the dataset.
     if args.task_name is not None:
         # Downloading and loading a dataset from the hub.
-        raw_datasets = load_dataset("glue", args.task_name)
+        # raw_datasets = load_dataset("glue", args.task_name,data_files=data_files) 
+        raw_datasets = load_from_disk("./glue")
     else:
         # Loading the dataset from local csv or json file.
         data_files = {}

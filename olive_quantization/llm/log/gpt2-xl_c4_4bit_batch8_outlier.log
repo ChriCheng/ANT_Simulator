@@ -1,0 +1,53 @@
+/home/kuic/anaconda3/envs/OliVe/lib/python3.8/site-packages/torch/distributed/launch.py:208: FutureWarning: The module torch.distributed.launch is deprecated
+and will be removed in future. Use torchrun.
+Note that --use-env is set by default in torchrun.
+If your script expects `--local-rank` argument to be set, please
+change it to read from `os.environ['LOCAL_RANK']` instead. See 
+https://pytorch.org/docs/stable/distributed.html#launch-utility for 
+further instructions
+
+  main()
+Traceback (most recent call last):
+  File "run_clm.py", line 58, in <module>
+    from quant_model import *
+  File "/home/kuic/code/ANT-Quantization/olive_quantization/llm/../antquant/quant_model.py", line 7, in <module>
+    from quant_utils import quant_args
+  File "/home/kuic/code/ANT-Quantization/olive_quantization/llm/../antquant/quant_utils.py", line 6, in <module>
+    import torchvision.models as models
+ModuleNotFoundError: No module named 'torchvision'
+E0824 11:11:05.064412 140460955505280 torch/distributed/elastic/multiprocessing/api.py:833] failed (exitcode: 1) local_rank: 0 (pid: 359383) of binary: /home/kuic/anaconda3/envs/OliVe/bin/python
+Traceback (most recent call last):
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/runpy.py", line 194, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/site-packages/torch/distributed/launch.py", line 208, in <module>
+    main()
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/site-packages/typing_extensions.py", line 2853, in wrapper
+    return arg(*args, **kwargs)
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/site-packages/torch/distributed/launch.py", line 204, in main
+    launch(args)
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/site-packages/torch/distributed/launch.py", line 189, in launch
+    run(args)
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/site-packages/torch/distributed/launcher/api.py", line 133, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/kuic/anaconda3/envs/OliVe/lib/python3.8/site-packages/torch/distributed/launcher/api.py", line 264, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+run_clm.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2024-08-24_11:11:05
+  host      : Retal
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 359383)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

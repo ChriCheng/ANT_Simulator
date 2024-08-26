@@ -258,9 +258,13 @@ class Simulator(object):
         cfg_dict = {'size (bytes)': wbuf_bank_size /8., 'block size (bytes)': wbuf_bits/8., 'read-write port': 0}
         
         wbuf_data = self.sram_obj.get_data_clean(cfg_dict)
+        # 计算读取能量（每比特）
         wbuf_read_energy = float(wbuf_data['read_energy_nJ'].iloc[0]) / wbuf_bits
+        # 计算写入能量（每比特）
         wbuf_write_energy = float(wbuf_data['write_energy_nJ'].iloc[0]) / wbuf_bits
+        # 计算泄漏功率（总功率）
         wbuf_leak_power = float(wbuf_data['leak_power_mW'].iloc[0]) * wbuf_bank
+        # 计算面积（总面积）
         wbuf_area = float(wbuf_data['area_mm^2'].iloc[0]) * wbuf_bank
 
         self.logger.debug('WBUF :')
@@ -323,6 +327,7 @@ class Simulator(object):
             lookup_dict['N'] = 1
             lookup_dict['M'] = 1
             core_data = lookup_pandas_dataframe(core_synth_data, lookup_dict)
+            # print(f'core_data is :{core_data}')
             assert len(core_data) == 1
             core_area = float(core_data['Area (um^2)'].iloc[0]) * 1.e-6 * (N * M) / 1.
             core_dyn_power = float(core_data['Dynamic Power (nW)'].iloc[0]) * (N * M) / 1.
