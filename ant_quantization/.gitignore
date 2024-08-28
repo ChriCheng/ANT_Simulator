@@ -29,6 +29,8 @@ ant_quantization/DataSet/Cifar10/cifar-10-python.tar.gz
 # 忽略BERT目录下的SST.zip
 BERT/SST.zip
 
+# 忽略DataSet/Cifar10目录下的cifar-10-python.tar.gz
+DataSet/Cifar10/cifar-10-python.tar.gz
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
