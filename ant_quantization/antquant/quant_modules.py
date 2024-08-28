@@ -7,12 +7,24 @@ import numpy as np
 import quant_cuda
 import torch.distributed as dist
 from quant_affine import *
-
 class QuantBase():
-    def _quantization(x, quant_grid):
+    def appropriateQuant(x,quant_grid):
+        # minDis = torch.tensor(float('inf'), device=x.device)
+        minDis = torch.full_like(input=x,fill_value= float(102400),device=x.device)
+        quantedRes = x
+        for y in quant_grid:
+            dis = abs(x - y )
+            compareRes = minDis.gt(dis).int()
+            minDis = minDis * (1- compareRes) + dis *compareRes
+            quantedRes  = quantedRes * (1- compareRes) + y *compareRes      
+
+        return quantedRes
+
+    def _quantization(x, quant_grid):##将输入数据进行量化
         shape = x.shape
         quant_array = x.view(-1)
         quant_grid = quant_grid.type_as(quant_array)
+        quant_array_new = QuantBase.appropriateQuant(x= quant_array , quant_grid = quant_grid) 
         quant_array, _ = quant_cuda.quant(quant_array, quant_grid)
         quant_array = quant_array.view(shape)
         return quant_array
@@ -40,7 +52,7 @@ class Quantizer(nn.Module):
         self.register_buffer('bit', torch.tensor(bit))
         self.register_buffer('has_inited_quant_para', torch.tensor(0.0))
         self.register_buffer('quant_grid', torch.ones(2**bit))
-        
+        '''量化的上界和下界'''
         self.w_up = self.args.w_up
         self.a_up = self.args.a_up
         self.w_low = self.args.w_low
@@ -301,7 +313,7 @@ class Quantizer(nn.Module):
                 self.alpha.data = new_alpha
                 quant_tensor = self._forward(tensor)
 
-                score = self.mse_loss(quant_tensor, tensor)
+                score = self.mse_loss(quant_tensor, tensor) ##求量化误差
                 alpha[score < best_score] = new_alpha[score < best_score]
                 best_score[score < best_score] = score[score < best_score]
         else:        
@@ -412,13 +424,13 @@ class Quantizer(nn.Module):
 
         mse_list = np.array(mse_list)
         mse_idx = np.argsort(mse_list)
-        self.mode = modes[mse_idx[0]]
+        self.mode = modes[mse_idx[0]] ## 找到最合适的量化方式
     
     def outlier_set(self, data):
         def reduce_ave_tensor(tensor):
             rt = tensor.clone()
-            dist.all_reduce(rt, op=dist.ReduceOp.SUM)
-            rt /= dist.get_world_size()
+            # dist.all_reduce(rt, op=dist.ReduceOp.SUM)  ## 分布式训练
+            # rt /= dist.get_world_size()
             return rt
 
         q = torch.tensor([self.percent], device = data.device)
@@ -429,8 +441,8 @@ class Quantizer(nn.Module):
         self.percent_value_int4.data = reduce_ave_tensor(self.percent_value_int4.data)
         self.percent_value_int16.data = reduce_ave_tensor(self.percent_value_int16.data)
 
-        if dist.get_rank() == 0: 
-            print(self.name, self.percent_value_int4.item(), self.percent_value_int16.item())
+        # if dist.get_rank() == 0: 
+        #     print(self.name, self.percent_value_int4.item(), self.percent_value_int16.item())
         self.is_perchannel = False
         self.quant_grid.data = self.int_value()
         self.has_inited_quant_para.data = torch.ones_like(self.has_inited_quant_para)
@@ -516,19 +528,19 @@ class Quantizer(nn.Module):
 
                 def reduce_ave_tensor(tensor):
                     rt = tensor.clone()
-                    dist.all_reduce(rt, op=dist.ReduceOp.SUM)
-                    rt /= dist.get_world_size()
+                    # dist.all_reduce(rt, op=dist.ReduceOp.SUM)
+                    # rt /= dist.get_world_size()
                     return rt
 
                 quant_data = self._forward(data)
                 self.mse = self.mse_loss(quant_data, data, 2, is_perchannel=self.is_perchannel).mean()
-                dist.broadcast(self.mse, 0)
-                if dist.get_rank() == 0:
-                    print(self.mode, end="\t")
-                    print("%d-bit \t %s," %(self.bit.item(), self.name))
+                # dist.broadcast(self.mse, 0)
+                # if dist.get_rank() == 0:
+                #     print(self.mode, end="\t")
+                #     print("%d-bit \t %s," %(self.bit.item(), self.name))
                 
                 self.alpha.data = reduce_ave_tensor(self.alpha.data)
-                dist.broadcast(self.quant_grid, 0)
+                # dist.broadcast(self.quant_grid, 0)
 
                 self.has_inited_quant_para.data = torch.ones_like(self.has_inited_quant_para)
             

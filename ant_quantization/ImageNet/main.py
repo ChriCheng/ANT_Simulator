@@ -11,11 +11,13 @@ import argparse
 import pickle
 import numpy as np
 import copy
-sys.path.append("../antquant")
-from quant_model import *
-from quant_utils import *
+# sys.path.append("../antquant")
+workingPath = os.getcwd() 
+sys.path.append(workingPath+"/ant_quantization/")
+sys.path.append(workingPath+"/ant_quantization/antquant/")
+from antquant.quant_model import *
+from antquant.quant_utils import *
 from dataloader import get_dataloader, get_imagenet_dataloader
-
 
 parser = argparse.ArgumentParser(description='PyTorch Adaptive Numeric DataType Training')
 parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
@@ -25,13 +27,13 @@ parser.add_argument('--ckpt_path', default=None, type=str,
                     help='checkpoint path')
 parser.add_argument('--dataset', default='cifar10', type=str, 
                     help='dataset name')
-parser.add_argument('--dataset_path', default='/nvme/imagenet', type=str, 
+parser.add_argument('--dataset_path', default='./DataSet/Cifar10', type=str, 
                     help='dataset path')
 parser.add_argument('--model', default='resnet18', type=str, 
                     help='model name')
-parser.add_argument('--train', default=False, action='store_true', 
+parser.add_argument('--train', default=True, type=bool, 
                     help='train')
-parser.add_argument('--epoch', default=3, type=int, 
+parser.add_argument('--epoch', default=20, type=int, 
                     help='epoch num')
 parser.add_argument('--batch_size', default=256, type=int, 
                     help='batch_size num')
@@ -39,10 +41,10 @@ parser.add_argument('--tag', default='', type=str,
                     help='tag checkpoint')
 parser.add_argument("--local_rank",
                     type=int,
-                    default=-1,
+                    default=0,
                     help="local_rank for distributed training on gpus")
                     
-parser.add_argument('--mode', default='base', type=str,
+parser.add_argument('--mode', default='int', type=str,
                     help='quantizer mode')
 parser.add_argument('--wbit', '-wb', default='8', type=int, 
                     help='weight bit width')
@@ -76,7 +78,7 @@ print(args)
 
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
-dist.init_process_group(backend='nccl')
+# dist.init_process_group(backend='nccl')
 local_rank = args.local_rank
 if torch.cuda.is_available():
     torch.cuda.set_device(local_rank)
@@ -108,7 +110,7 @@ trainloader, testloader = get_dataloader(args.dataset, args.batch_size, args.dat
 
 # Set Quantizer
 logger.info('==> Setting quantizer..')
-set_quantizer(args)
+quant_args = set_quantizer(args)
 print(args)
 logger.info(args)
 
@@ -118,7 +120,7 @@ model = get_model(args)
 
 model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
 
-model = quantize_model(model)
+model = quantize_model(model=model , quant_args = quant_args)
 set_first_last_layer(model)
 if not args.disable_quant and args.mode != 'base':
     enable_quantization(model)
@@ -129,7 +131,7 @@ if args.disable_input_quantization:
 
 model.to(device)
 
-args.lr = args.lr * float(args.batch_size * dist.get_world_size()) / 256.
+# args.lr = args.lr * float(args.batch_size * dist.get_world_size()) / 256.
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD([{'params': model.parameters(), 'initial_lr': args.lr}], lr=args.lr,
                       momentum=0.9, weight_decay=1e-4)
@@ -162,17 +164,17 @@ if args.resume:
     scheduler.load_state_dict(checkpoint['scheduler'])
 
 
-model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
+# model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
 
 def reduce_ave_tensor(tensor):
-    rt = tensor.clone()
-    dist.all_reduce(rt, op=dist.ReduceOp.SUM)
-    rt /= dist.get_world_size()
-    return rt
+    # rt = tensor.clone()
+    # dist.all_reduce(rt, op=dist.ReduceOp.SUM)
+    # rt /= dist.get_world_size()
+    return tensor
 def reduce_sum_tensor(tensor):
-    rt = tensor.clone()
-    dist.all_reduce(rt, op=dist.ReduceOp.SUM)
-    return rt
+    # rt = tensor.clone()
+    # dist.all_reduce(rt, op=dist.ReduceOp.SUM)
+    return tensor
 
 # Training
 def train(epoch):
@@ -183,17 +185,18 @@ def train(epoch):
     total = 0
     best_acc = 0
 
-    for batch_idx, data in enumerate(trainloader):
-        inputs = data[0]["data"]
-        targets = data[0]["label"].squeeze(-1).long()
-
+    for batch_idx, (data,label) in enumerate(trainloader):
+        # inputs = data[0]["data"]
+        # targets = data[0]["label"].squeeze(-1).long()
+        inputs = data.to(device)
+        targets = label.to(device)
         if batch_idx == 0 and epoch == 0  and args.layer_8bit_n != 0:
             model(inputs)
             set_8_bit_layer_n(model, args.layer_8bit_n)
         if batch_idx == 0 and epoch == 0  and args.layer_8bit_l != None:
             model(inputs)
             set_8_bit_layer_l(model, args.layer_8bit_l)
-            
+        # print(inputs)    
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs, targets)
@@ -232,7 +235,7 @@ def train(epoch):
                 'scheduler': scheduler.state_dict()
             }
             torch.save(state, get_ckpt_filename(output_path, epoch))
-    trainloader.reset()
+    # trainloader.reset()
 
 # Post-Training Quantization
 def ptq_init():
@@ -249,10 +252,9 @@ def test():
     correct_5 = 0
     total = 0     
     with torch.no_grad():
-        for batch_idx, data in enumerate(testloader):
-            inputs = data[0]["data"]
-            targets = data[0]["label"].squeeze(-1).long()
-            
+        for batch_idx, (data,label) in enumerate(testloader):
+            inputs = data.to(device)
+            targets = label.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
@@ -277,7 +279,7 @@ def test():
             ave_loss = test_loss/total
 
     acc = 100.*correct/total
-    testloader.reset()
+    # testloader.reset()
 
     acc_ave = reduce_ave_tensor(torch.tensor(acc).to(device)).item()
     if local_rank == 0:

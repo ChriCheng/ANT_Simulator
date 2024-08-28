@@ -25,6 +25,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+ant_quantization/DataSet/Cifar10/cifar-10-python.tar.gz
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

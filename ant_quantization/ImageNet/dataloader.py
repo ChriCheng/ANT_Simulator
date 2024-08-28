@@ -54,7 +54,7 @@ def get_cifar100_dataloader(batch_size=128, num_workers=2, shuffle=True):
 
     return cifar100_training_loader, cifar100_test_loader
 
-def get_cifar10_dataloader(batch_size=128):
+def get_cifar10_dataloader(batch_size=128 , dataset_path = ''):
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -66,24 +66,26 @@ def get_cifar10_dataloader(batch_size=128):
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
-
+    
+    assert dataset_path != None
+    
     trainset = torchvision.datasets.CIFAR10(
-        root='./data', train=True, download=True, transform=transform_train)
+        root= dataset_path, train=True, download=True, transform=transform_train)
 
     # Partition dataset among workers using DistributedSampler
-    train_sampler = torch.utils.data.distributed.DistributedSampler(trainset)
+    # train_sampler = torch.utils.data.distributed.DistributedSampler(trainset)
 
     trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=batch_size, shuffle=(train_sampler is None), num_workers=4, sampler=train_sampler)
+        trainset, batch_size=batch_size, shuffle= True, num_workers=4)
 
     testset = torchvision.datasets.CIFAR10(
-        root='./data', train=False, download=True, transform=transform_test)
+        root=dataset_path, train=False, download=True, transform=transform_test)
 
     # Partition dataset among workers using DistributedSampler
-    train_sampler = torch.utils.data.distributed.DistributedSampler(testset)
+    # train_sampler = torch.utils.data.distributed.DistributedSampler(testset)
 
     testloader = torch.utils.data.DataLoader(
-        testset, batch_size=100, shuffle=False, num_workers=4, sampler=train_sampler)
+        testset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     return trainloader, testloader
 
@@ -277,13 +279,13 @@ def get_imagenet_dataloader_official(batch_size=256, dataset_path=None):
     return train_loader, val_loader
 
 
-def get_dataloader(name, batch_size, dataset_path, model_arch=None, *arg, **kargs):
+def get_dataloader(name, batch_size, dataset_path, model_arch=None):
     if name == 'cifar10':
-        return get_cifar10_dataloader(batch_size, dataset_path, *arg, **kargs)
+        return get_cifar10_dataloader(batch_size, dataset_path)
     elif name == 'cifar100':
-        return get_cifar100_dataloader(batch_size, dataset_path, *arg, **kargs)
+        return get_cifar100_dataloader(batch_size, dataset_path)
     elif name == 'imagenet':
-        return dali_get_imagenet_dataloader(batch_size, dataset_path, model_arch=model_arch, *arg, **kargs)
+        return dali_get_imagenet_dataloader(batch_size, dataset_path, model_arch=model_arch)
         # return get_imagenet_dataloader(batch_size, dataset_path, *arg, **kargs)
         # return get_imagenet_dataloader_official(batch_size, dataset_path, *arg, **kargs)
     else:
