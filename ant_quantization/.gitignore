@@ -26,6 +26,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 ant_quantization/DataSet/Cifar10/cifar-10-python.tar.gz
+# 忽略BERT目录下的SST.zip
+BERT/SST.zip
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
