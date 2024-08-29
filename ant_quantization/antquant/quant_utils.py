@@ -6,11 +6,12 @@ import uuid
 import torchvision.models as models
 import torch.distributed as dist
 
+
 quant_args = {}
 def set_quantizer(args):
     global quant_args
     quant_args.update({'mode' : args.mode, 'wbit': args.wbit, 'abit': args.abit, 'args' : args})
-
+    return quant_args
 
 logger = logging.getLogger(__name__)
 
@@ -33,28 +34,29 @@ def tag_info(args):
 
 def get_ckpt_path(args):
     path='output'
-    if torch.distributed.get_rank() == 0:
-        if not os.path.isdir(path):
-            os.mkdir(path)
+    # if torch.distributed.get_rank() == 0:
+    if not os.path.isdir(path):
+        os.mkdir(path)
     path = os.path.join(path, args.model+"_"+args.dataset)
-    if torch.distributed.get_rank() == 0:
-        if not os.path.isdir(path):
-            os.mkdir(path)
+    # if torch.distributed.get_rank() == 0:
+    if not os.path.isdir(path):
+        os.mkdir(path)
     pathname = args.mode + '_W' + str(args.wbit) + 'A' + str(args.abit) + '_'
 
     num = int(uuid.uuid4().hex[0:4], 16)
     num_tensor = torch.tensor(num).cuda()
-    dist.broadcast(num_tensor, 0)
+    # dist.broadcast(num_tensor, 0)
     pathname += str(num_tensor.item())
     path = os.path.join(path, pathname)
-    if torch.distributed.get_rank() == 0:
-        if not os.path.isdir(path):
-            os.mkdir(path)
+    # if torch.distributed.get_rank() == 0:
+    if not os.path.isdir(path):
+        os.mkdir(path)
     
-    torch.cuda.synchronize()
-    torch.distributed.barrier()
+    # torch.cuda.synchronize()
+    # torch.distributed.barrier()
 
-    path = os.path.join(path, "gpu_" + str(torch.distributed.get_rank()))
+    # path = os.path.join(path, "gpu_" + str(torch.distributed.get_rank()))
+    path = os.path.join(path, "gpu_0" )
     if not os.path.isdir(path):
         os.mkdir(path)    
     return path

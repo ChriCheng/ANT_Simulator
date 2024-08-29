@@ -4,16 +4,17 @@ import numpy as np
 import copy
 from quant_modules import TensorQuantizer, Conv2dQuantizer, LinearQuantizer
 from multihead_attention import MultiheadAttentionQuantizer
-from quant_utils import quant_args
+from quant_utils import *
 import torch.distributed as dist
 
 
-def quantize_model(model):
+def quantize_model(model ,quant_args):
     """
     Recursively quantize a pretrained single-precision model to int8 quantized model
     model: pretrained single-precision model
     """
     # quantize layers
+    # global quant_args
     if type(model) == nn.Conv2d:
         quant_mod = Conv2dQuantizer(**quant_args)
         quant_mod.set_param(model)
@@ -29,17 +30,17 @@ def quantize_model(model):
     elif type(model) == nn.Sequential:
         mods = []
         for n, m in model.named_children():
-            mods.append(quantize_model(m))
+            mods.append(quantize_model(model= m ,quant_args= quant_args))
         return nn.Sequential(*mods)
     elif type(model) == nn.ModuleList:
         mods = []
         for n, m in model.named_children():
-            mods.append(quantize_model(m))
+            mods.append(quantize_model(model= m ,quant_args= quant_args))
         return nn.Sequential(*mods)
     elif isinstance(model, nn.Sequential):
         mods = []
         for n, m in model.named_children():
-            mods.append(quantize_model(m))
+            mods.append(quantize_model(model= m ,quant_args= quant_args))
         return nn.Sequential(*mods)
     else:
         # recursively use the quantized module to replace the single-precision module
@@ -47,7 +48,7 @@ def quantize_model(model):
         for attr in dir(model):
             mod = getattr(model, attr)
             if isinstance(mod, nn.Module):
-                setattr(q_model, attr, quantize_model(mod))
+                setattr(q_model, attr, quantize_model(model= mod ,quant_args= quant_args))
         return q_model
 
 def set_first_last_layer(model):
@@ -149,6 +150,7 @@ def set_8_bit_layer_n(model, l_num):
         print("------------- 8-bit Re-SET -------------")
 
 def load_ant_state_dict(model, checkpoint):
+    print (checkpoint.keys())
     for name, module in model.named_modules():
         if name + ".quant_grid" in checkpoint.keys():
             module.quant_grid.data = checkpoint[name + ".quant_grid"]
