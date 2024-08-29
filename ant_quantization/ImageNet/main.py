@@ -5,6 +5,8 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torchvision.models as models
+from torchvision.datasets import CIFAR10
+from torchvision import transforms 
 import sys
 import os
 import argparse
@@ -29,7 +31,7 @@ parser.add_argument('--ckpt_path', default=None, type=str,
                     help='checkpoint path')
 parser.add_argument('--dataset', default='cifar10', type=str, 
                     help='dataset name')
-parser.add_argument('--dataset_path', default='./DataSet/Cifar10', type=str, 
+parser.add_argument('--dataset_path', default='../DataSet/Cifar10', type=str, 
                     help='dataset path')
 parser.add_argument('--model', default='resnet18', type=str, 
                     help='model name')
@@ -45,7 +47,8 @@ parser.add_argument("--local_rank",
                     type=int,
                     default=0,
                     help="local_rank for distributed training on gpus")
-                    
+local_rank = int(os.environ.get('LOCAL_RANK', 0))
+
 parser.add_argument('--mode', default='int', type=str,
                     help='quantizer mode')
 parser.add_argument('--wbit', '-wb', default='8', type=int, 
@@ -105,11 +108,33 @@ logger = logging.getLogger(__name__)
 
 logger.info(output_path)
 logger.info(args)
+#初始化逻辑
+def setup_distributed_training(args):
+    if 'LOCAL_RANK' in os.environ:
+        local_rank = int(os.environ['LOCAL_RANK'])
+        torch.cuda.set_device(local_rank)
+        dist.init_process_group(backend='nccl')
+    else:
+        raise ValueError("LOCAL_RANK not found in environment variables.")
+def get_cifar10_dataloader(batch_size, dataset_path):
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+    trainset = CIFAR10(root=dataset_path, train=True, download=False, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+
+    testset = CIFAR10(root=dataset_path, train=False, download=False, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+
+    return trainloader, testloader
 
 # Data
 logger.info('==> Preparing data..')
-trainloader, testloader = get_dataloader(args.dataset, args.batch_size, args.dataset_path, args.model)
-
+setup_distributed_training(args) #设置分布式训练
+# trainloader, testloader = get_dataloader(args.dataset, args.batch_size, args.dataset_path, args.model)
+trainloader, testloader = get_cifar10_dataloader(args.batch_size, args.dataset_path) #using cifar10
 # Set Quantizer
 logger.info('==> Setting quantizer..')
 quant_args = set_quantizer(args)
