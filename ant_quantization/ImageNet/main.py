@@ -11,12 +11,14 @@ import argparse
 import pickle
 import numpy as np
 import copy
-# sys.path.append("../antquant")
-workingPath = os.getcwd() 
-sys.path.append(workingPath+"/ant_quantization/")
-sys.path.append(workingPath+"/ant_quantization/antquant/")
-from antquant.quant_model import *
-from antquant.quant_utils import *
+sys.path.append("../antquant")
+# workingPath = os.getcwd()
+# sys.path.append(workingPath+"/ant_quantization/")
+# sys.path.append(workingPath+"/ant_quantization/antquant/")
+# from antquant.quant_model import *
+# from antquant.quant_utils import *
+from quant_model import *
+from quant_utils import *
 from dataloader import get_dataloader, get_imagenet_dataloader
 
 parser = argparse.ArgumentParser(description='PyTorch Adaptive Numeric DataType Training')
