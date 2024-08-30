@@ -9,6 +9,7 @@ We evaluate the results with models in image classification and NLP.
 ## Environment
 ```
 # PyTorch 1.11
+根据系统做修改
 conda create -n ant_quant python=3.8 
 conda activate ant_quant
 conda install  pytorch=1.11.0 torchvision torchaudio cudatoolkit=11.3 -c pytorch
