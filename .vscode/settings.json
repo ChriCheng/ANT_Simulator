@@ -1,0 +1,5 @@
+{
+	"python.analysis.extraPaths": [
+		"./ant_quantization/antquant"
+	]
+}
