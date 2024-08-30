@@ -49,8 +49,10 @@ parser.add_argument("--local_rank",
                     help="local_rank for distributed training on gpus")
 local_rank = int(os.environ.get('LOCAL_RANK', 0))
 
-parser.add_argument('--mode', default='int', type=str,
+parser.add_argument('--mode', default='base', type=str,
                     help='quantizer mode')
+# parser.add_argument('--mode', default='int', type=str,
+#                     help='quantizer mode')
 parser.add_argument('--wbit', '-wb', default='8', type=int, 
                     help='weight bit width')
 parser.add_argument('--abit', '-ab', default='8', type=int, 
