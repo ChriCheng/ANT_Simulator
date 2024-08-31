@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import os
 import numpy as np
-
+from torchvision.transforms.functional import InterpolationMode
 CIFAR100_TRAIN_MEAN = (0.5070751592371323, 0.48654887331495095, 0.4409178433670343)
 CIFAR100_TRAIN_STD = (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
 
@@ -55,16 +55,17 @@ def get_cifar100_dataloader(batch_size=128, num_workers=2, shuffle=True):
     return cifar100_training_loader, cifar100_test_loader
 
 def get_cifar10_dataloader(batch_size=128 , dataset_path = ''):
+    #调整32*32为224*224大小适应模型
     transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
+        transforms.Resize((224, 224),interpolation=InterpolationMode.BICUBIC),
         transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.247, 0.2435, 0.2616]),
     ])
 
     transform_test = transforms.Compose([
+        transforms.Resize((224, 224),interpolation=InterpolationMode.BICUBIC),
         transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.247, 0.2435, 0.2616]),
     ])
     
     assert dataset_path != None

@@ -8,7 +8,7 @@ from quant_utils import *
 import torch.distributed as dist
 
 
-def quantize_model(model, quant_args):
+def quantize_model(model ,quant_args):
     """
     Recursively quantize a pretrained single-precision model to int8 quantized model
     model: pretrained single-precision model
@@ -30,17 +30,17 @@ def quantize_model(model, quant_args):
     elif type(model) == nn.Sequential:
         mods = []
         for n, m in model.named_children():
-            mods.append(quantize_model(model=m, quant_args=quant_args))
+            mods.append(quantize_model(model= m ,quant_args= quant_args))
         return nn.Sequential(*mods)
     elif type(model) == nn.ModuleList:
         mods = []
         for n, m in model.named_children():
-            mods.append(quantize_model(model=m, quant_args=quant_args))
+            mods.append(quantize_model(model= m ,quant_args= quant_args))
         return nn.Sequential(*mods)
     elif isinstance(model, nn.Sequential):
         mods = []
         for n, m in model.named_children():
-            mods.append(quantize_model(model=m, quant_args=quant_args))
+            mods.append(quantize_model(model= m ,quant_args= quant_args))
         return nn.Sequential(*mods)
     else:
         # recursively use the quantized module to replace the single-precision module
@@ -48,7 +48,7 @@ def quantize_model(model, quant_args):
         for attr in dir(model):
             mod = getattr(model, attr)
             if isinstance(mod, nn.Module):
-                setattr(q_model, attr, quantize_model(model=mod, quant_args=quant_args))
+                setattr(q_model, attr, quantize_model(model= mod ,quant_args= quant_args))
         return q_model
 
 
@@ -161,7 +161,7 @@ def set_8_bit_layer_n(model, l_num):
 
 
 def load_ant_state_dict(model, checkpoint):
-    print(checkpoint.keys())
+    print (checkpoint.keys())
     for name, module in model.named_modules():
         if name + ".quant_grid" in checkpoint.keys():
             module.quant_grid.data = checkpoint[name + ".quant_grid"]

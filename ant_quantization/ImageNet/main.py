@@ -13,6 +13,7 @@ import argparse
 import pickle
 import numpy as np
 import copy
+# sys.path.append("../antquant")
 sys.path.append("../antquant")
 # workingPath = os.getcwd()
 # sys.path.append(workingPath+"/ant_quantization/")
@@ -23,177 +24,6 @@ from quant_model import *
 from quant_utils import *
 from dataloader import get_dataloader, get_imagenet_dataloader
 
-parser = argparse.ArgumentParser(description='PyTorch Adaptive Numeric DataType Training')
-parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
-parser.add_argument('--resume', '-r', action='store_true',
-                    help='resume from checkpoint')
-parser.add_argument('--ckpt_path', default=None, type=str,
-                    help='checkpoint path')
-parser.add_argument('--dataset', default='cifar10', type=str, 
-                    help='dataset name')
-parser.add_argument('--dataset_path', default='../DataSet/Cifar10', type=str, 
-                    help='dataset path')
-parser.add_argument('--model', default='resnet18', type=str, 
-                    help='model name')
-parser.add_argument('--train', default=True, type=bool, 
-                    help='train')
-parser.add_argument('--epoch', default=20, type=int, 
-                    help='epoch num')
-parser.add_argument('--batch_size', default=256, type=int, 
-                    help='batch_size num')
-parser.add_argument('--tag', default='', type=str, 
-                    help='tag checkpoint')
-parser.add_argument("--local_rank",
-                    type=int,
-                    default=0,
-                    help="local_rank for distributed training on gpus")
-local_rank = int(os.environ.get('LOCAL_RANK', 0))
-
-parser.add_argument('--mode', default='base', type=str,
-                    help='quantizer mode')
-# parser.add_argument('--mode', default='int', type=str,
-#                     help='quantizer mode')
-parser.add_argument('--wbit', '-wb', default='8', type=int, 
-                    help='weight bit width')
-parser.add_argument('--abit', '-ab', default='8', type=int, 
-                    help='activation bit width')
-parser.add_argument('--search', default=False, action='store_true', 
-                    help='search alpha')
-parser.add_argument('--w_up', '-wu', default='150', type=int, 
-                    help='weight search upper bound')
-parser.add_argument('--a_up', '-au', default='150', type=int, 
-                    help='activation search upper bound')
-parser.add_argument('--w_low', '-wl', default='75', type=int, 
-                    help='weight search lower bound')
-parser.add_argument('--a_low', '-al', default='75', type=int, 
-                    help='activation search lower bound')
-parser.add_argument('--percent', '-p', default='100', type=int, 
-                    help='percent for outlier')
-parser.add_argument('--ptq', default=False, action='store_true', 
-                    help='post training quantization')
-parser.add_argument('--disable_quant', default=False, action='store_true', 
-                    help='disable quantization')
-parser.add_argument('--disable_input_quantization', default=False, action='store_true', 
-                    help='disable input quantization')
-parser.add_argument('--layer_8bit_n', '-n8', default='0', type=int, 
-                    help='number of 8-bit layers')
-parser.add_argument('--layer_8bit_l', '-l8', default=None, type=str, 
-                    help='list of 8-bit layers')
-args = parser.parse_args()
-
-print(args)
-
-start_epoch = 0  # start from epoch 0 or last checkpoint epoch
-
-# dist.init_process_group(backend='nccl')
-local_rank = args.local_rank
-if torch.cuda.is_available():
-    torch.cuda.set_device(local_rank)
-    device = torch.device("cuda", local_rank)
-    cudnn.benchmark = True
-
-# output path
-output_path = get_ckpt_path(args)
-
-# logging setting
-set_util_logging(output_path + "/training.log")
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-    datefmt='%m/%d/%Y %H:%M:%S',
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler(output_path + "/training.log"),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
-
-logger.info(output_path)
-logger.info(args)
-#初始化逻辑
-def setup_distributed_training(args):
-    if 'LOCAL_RANK' in os.environ:
-        local_rank = int(os.environ['LOCAL_RANK'])
-        torch.cuda.set_device(local_rank)
-        dist.init_process_group(backend='nccl')
-    else:
-        raise ValueError("LOCAL_RANK not found in environment variables.")
-def get_cifar10_dataloader(batch_size, dataset_path):
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
-
-    trainset = CIFAR10(root=dataset_path, train=True, download=False, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
-
-    testset = CIFAR10(root=dataset_path, train=False, download=False, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
-
-    return trainloader, testloader
-
-# Data
-logger.info('==> Preparing data..')
-setup_distributed_training(args) #设置分布式训练
-# trainloader, testloader = get_dataloader(args.dataset, args.batch_size, args.dataset_path, args.model)
-trainloader, testloader = get_cifar10_dataloader(args.batch_size, args.dataset_path) #using cifar10
-# Set Quantizer
-logger.info('==> Setting quantizer..')
-quant_args = set_quantizer(args)
-print(args)
-logger.info(args)
-
-# Model
-logger.info('==> Building model..')
-model = get_model(args)
-
-model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-
-model = quantize_model(model=model , quant_args = quant_args)
-set_first_last_layer(model)
-if not args.disable_quant and args.mode != 'base':
-    enable_quantization(model)
-else:
-    disable_quantization(model)
-if args.disable_input_quantization:
-    disable_input_quantization(model)
-
-model.to(device)
-
-# args.lr = args.lr * float(args.batch_size * dist.get_world_size()) / 256.
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD([{'params': model.parameters(), 'initial_lr': args.lr}], lr=args.lr,
-                      momentum=0.9, weight_decay=1e-4)
-
-"""
-### LR scheduler
-# Train resnet-50: decay the learning rate by a factor of 10 at the 30th, 48th, and 58th epochs.
-# Using such a schedule, we reach 75% single crop top-1 accuracy on ImageNet 
-# in just 50 epochs and reach 75.5% top-1 accuracy in 60 epochs. 
-# https://arxiv.org/pdf/1907.08610v2.pdf
-# https://github.com/pytorch/examples/blob/master/imagenet/main.py
-"""
-scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,  milestones = [2,3,4], gamma = 0.1, last_epoch=-1)
-# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epoch)
-
-if args.resume:
-    # Load checkpoint.
-    logger.info('==> Resuming from checkpoint..')
-    checkpoint = torch.load(args.ckpt_path, map_location='cuda')
-    check = {}
-    for key, item in checkpoint['model'].items():
-        check[key[7:]] = item
-
-    ## Load for ANT quantizaton
-    load_ant_state_dict(model, check)
-
-    model.load_state_dict(check, strict=True)
-    start_epoch = checkpoint['epoch'] + 1
-    optimizer.load_state_dict(checkpoint['optimizer'])
-    scheduler.load_state_dict(checkpoint['scheduler'])
-
-
-# model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
 
 def reduce_ave_tensor(tensor):
     # rt = tensor.clone()
@@ -313,7 +143,207 @@ def test():
     acc_ave = reduce_ave_tensor(torch.tensor(acc).to(device)).item()
     if local_rank == 0:
         logger.info("Final accuracy: %.3f" % acc_ave)
+parser = argparse.ArgumentParser(description='PyTorch Adaptive Numeric DataType Training')
+parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
+parser.add_argument('--resume', '-r', action='store_true',
+                    help='resume from checkpoint')
+parser.add_argument('--ckpt_path', default=None, type=str,
+                    help='checkpoint path')
+parser.add_argument('--dataset', default='cifar10', type=str, 
+                    help='dataset name')
+parser.add_argument('--dataset_path', default='../DataSet/Cifar10', type=str, 
+parser.add_argument('--dataset_path', default='./DataSet/Cifar10', type=str, 
+                    help='dataset path')
+parser.add_argument('--model', default='resnet18', type=str, 
+                    help='model name')
+parser.add_argument('--train', default=True, type=bool, 
+                    help='train')
+parser.add_argument('--epoch', default=20, type=int, 
+                    help='epoch num')
+parser.add_argument('--batch_size', default=256, type=int, 
+                    help='batch_size num')
+parser.add_argument('--tag', default='', type=str, 
+                    help='tag checkpoint')
 
+parser.add_argument("--local_rank",
+                    type=int,
+                    default=0,
+                    help="local_rank for distributed training on gpus")
+            
+parser.add_argument('--mode', default='int', type=str,
+                    help='quantizer mode')
+# parser.add_argument('--mode', default='int', type=str,
+#                     help='quantizer mode')
+parser.add_argument('--wbit', '-wb', default='8', type=int, 
+                    help='weight bit width')
+parser.add_argument('--abit', '-ab', default='8', type=int, 
+                    help='activation bit width')
+parser.add_argument('--search', default=False, action='store_true', 
+                    help='search alpha')
+parser.add_argument('--w_up', '-wu', default='150', type=int, 
+                    help='weight search upper bound')
+parser.add_argument('--a_up', '-au', default='150', type=int, 
+                    help='activation search upper bound')
+parser.add_argument('--w_low', '-wl', default='75', type=int, 
+                    help='weight search lower bound')
+parser.add_argument('--a_low', '-al', default='75', type=int, 
+                    help='activation search lower bound')
+parser.add_argument('--percent', '-p', default='100', type=int, 
+                    help='percent for outlier')
+parser.add_argument('--ptq', default=False, action='store_true', 
+                    help='post training quantization')
+parser.add_argument('--disable_quant', default=False, action='store_true', 
+                    help='disable quantization')
+parser.add_argument('--disable_input_quantization', default=False, action='store_true', 
+                    help='disable input quantization')
+parser.add_argument('--layer_8bit_n', '-n8', default='0', type=int, 
+                    help='number of 8-bit layers')
+parser.add_argument('--layer_8bit_l', '-l8', default=None, type=str, 
+                    help='list of 8-bit layers')
+args = parser.parse_args()
+
+print(args)
+
+start_epoch = 0  # start from epoch 0 or last checkpoint epoch
+
+# dist.init_process_group(backend='nccl')
+
+local_rank = args.local_rank
+if torch.cuda.is_available():
+    torch.cuda.set_device(local_rank)
+    device = torch.device("cuda", local_rank)
+    cudnn.benchmark = True
+
+# output path
+output_path = get_ckpt_path(args)
+
+# logging setting
+set_util_logging(output_path + "/training.log")
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+    datefmt='%m/%d/%Y %H:%M:%S',
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler(output_path + "/training.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+logger.info(output_path)
+logger.info(args)
+#初始化逻辑
+def setup_distributed_training(args):
+    if 'LOCAL_RANK' in os.environ:
+        local_rank = int(os.environ['LOCAL_RANK'])
+        torch.cuda.set_device(local_rank)
+        dist.init_process_group(backend='nccl')
+    else:
+        raise ValueError("LOCAL_RANK not found in environment variables.")
+def get_cifar10_dataloader(batch_size, dataset_path):
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
+    trainset = CIFAR10(root=dataset_path, train=True, download=False, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=2)
+
+    testset = CIFAR10(root=dataset_path, train=False, download=False, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=2)
+
+    return trainloader, testloader
+
+# Data
+logger.info('==> Preparing data..')
+setup_distributed_training(args) #设置分布式训练
+# trainloader, testloader = get_dataloader(args.dataset, args.batch_size, args.dataset_path, args.model)
+trainloader, testloader = get_cifar10_dataloader(args.batch_size, args.dataset_path) #using cifar10
+# Set Quantizer
+logger.info('==> Setting quantizer..')
+quant_args = set_quantizer(args)
+print(args)
+logger.info(args)
+
+
+class Model(nn.Module):
+  def __init__(self):
+    super().__init__()
+    self.net = nn.Sequential(nn.Conv2d(3, 96, kernel_size=11, stride=4, padding=1), nn.ReLU(),
+                             nn.MaxPool2d(kernel_size=3, stride=2), 
+                             nn.Conv2d(96, 256, kernel_size=5, padding=2), nn.ReLU(),
+                             nn.MaxPool2d(kernel_size=3, stride=2),
+                             nn.Conv2d(256, 384, kernel_size=3, padding=1), nn.ReLU(),
+                             nn.Conv2d(384, 384, kernel_size=3, padding=1), nn.ReLU(),
+                             nn.Conv2d(384, 256, kernel_size=3, padding=1), nn.ReLU(),
+                             nn.MaxPool2d(kernel_size=3, stride=2),
+                             nn.Flatten(), nn.Linear(256*5*5, 4096), nn.ReLU(),
+                             nn.Dropout(0.5),
+                             nn.Linear(4096, 4096), nn.ReLU(),
+                             nn.Dropout(0.5),
+                             nn.Linear(4096, 10))
+    
+  def forward(self, X):
+    return self.net(X)
+# 加载整个模型
+model_path = 'pretrained_alexnet_cifar10.pth'  # 确保这是您的模型文件路径
+model = torch.load(model_path)
+# Model
+logger.info('==> Building model..')
+#model = get_model(args)
+
+#model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+#量化前test
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD([{'params': model.parameters(), 'initial_lr': args.lr}], lr=args.lr,
+                      momentum=0.9, weight_decay=1e-4)
+print("量化前test")
+test()
+model = quantize_model(model=model , quant_args = quant_args)
+set_first_last_layer(model)
+if not args.disable_quant and args.mode != 'base':
+    enable_quantization(model)
+else:
+    disable_quantization(model)
+if args.disable_input_quantization:
+    disable_input_quantization(model)
+
+model.to(device)
+
+# args.lr = args.lr * float(args.batch_size * dist.get_world_size()) / 256.
+
+
+"""
+### LR scheduler
+# Train resnet-50: decay the learning rate by a factor of 10 at the 30th, 48th, and 58th epochs.
+# Using such a schedule, we reach 75% single crop top-1 accuracy on ImageNet 
+# in just 50 epochs and reach 75.5% top-1 accuracy in 60 epochs. 
+# https://arxiv.org/pdf/1907.08610v2.pdf
+# https://github.com/pytorch/examples/blob/master/imagenet/main.py
+"""
+scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,  milestones = [2,3,4], gamma = 0.1, last_epoch=-1)
+# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epoch)
+
+if args.resume:
+    # Load checkpoint.
+    logger.info('==> Resuming from checkpoint..')
+    checkpoint = torch.load(args.ckpt_path, map_location='cuda')
+    check = {}
+    for key, item in checkpoint['model'].items():
+        check[key[7:]] = item
+
+    ## Load for ANT quantizaton
+    load_ant_state_dict(model, check)
+
+    model.load_state_dict(check, strict=True)
+    start_epoch = checkpoint['epoch'] + 1
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    scheduler.load_state_dict(checkpoint['scheduler'])
+
+
+# model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
+
+'''
 if args.train:
     for epoch in range(start_epoch, start_epoch + args.epoch):
         logger.info(scheduler.state_dict())
@@ -321,3 +351,6 @@ if args.train:
         test()
 else:
     test()
+'''
+print("量化后test")
+test()
